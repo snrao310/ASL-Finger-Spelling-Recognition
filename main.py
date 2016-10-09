@@ -6,6 +6,8 @@ import math
 
 #todo: Ashish fill this
 def identifyGesture(handImage):
+    # currently returns gesture detected string. needs to return the actual letter it detects.
+    # Or if it doesn't detect anything, then it should return null string.
     return "Gesture Detected"
 
 def nothing(x):
@@ -25,12 +27,12 @@ cv2.createTrackbar('G for max','Camera Output',0,255,nothing)
 cv2.createTrackbar('R for max','Camera Output',0,255,nothing)
 
 # Default skin color values in natural lighting
-# cv2.setTrackbarPos('min1','Camera Output',52)
-# cv2.setTrackbarPos('min2','Camera Output',128)
-# cv2.setTrackbarPos('min3','Camera Output',0)
-# cv2.setTrackbarPos('max1','Camera Output',255)
-# cv2.setTrackbarPos('max2','Camera Output',140)
-# cv2.setTrackbarPos('max3','Camera Output',146)
+# cv2.setTrackbarPos('B for min','Camera Output',52)
+# cv2.setTrackbarPos('G for min','Camera Output',128)
+# cv2.setTrackbarPos('R for min','Camera Output',0)
+# cv2.setTrackbarPos('B for max','Camera Output',255)
+# cv2.setTrackbarPos('G for max','Camera Output',140)
+# cv2.setTrackbarPos('R for max','Camera Output',146)
 
 # Default skin color values in indoor lighting
 cv2.setTrackbarPos('B for min','Camera Output',0)
@@ -111,7 +113,8 @@ while keyPressed < 0: # any key pressed has a value >= 0
         letterDetected=identifyGesture(handImage) #todo: Ashish fill this function to return actual character
 
     if gestureDetected>0:
-        cv2.putText(sourceImage, letterDetected, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
+        if(letterDetected!= None):
+            cv2.putText(sourceImage, letterDetected, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
         gestureDetected-=1
 
     # crop coordinates for hand.
