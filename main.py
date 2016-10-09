@@ -48,7 +48,8 @@ h1=0
 
 _, prevHandImage=videoFrame.read()
 prevcnt=numpy.array([], dtype=numpy.int32)
-ab=0
+gestureStatic=0
+gestureDetected=0
 
 while(keyPressed < 0): # any key pressed has a value >= 0
     min_YCrCb = numpy.array([cv2.getTrackbarPos('min1','Camera Output'),cv2.getTrackbarPos('min2','Camera Output'),cv2.getTrackbarPos('min3','Camera Output')],numpy.uint8)
@@ -72,8 +73,18 @@ while(keyPressed < 0): # any key pressed has a value >= 0
     cnt = contours[0]
     ret = cv2.matchShapes(cnt, prevcnt, 2, 0.0)
     if(ret>0.72):
-        print (ret)
+        gestureStatic=0
+    else:
+        gestureStatic+=1
+
+    if gestureStatic==10:
+        gestureDetected=5;
+        print("Gesture Detected")
     prevcnt=contours[0]
+
+    if gestureDetected>0:
+        cv2.putText(sourceImage, "Gesture Detected", (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
+        gestureDetected-=1
 
     x, y, w, h = cv2.boundingRect(cnt)
 
