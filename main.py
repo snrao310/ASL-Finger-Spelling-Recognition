@@ -1,11 +1,3 @@
-''' Detect human skin tone and draw a boundary around it.
-Useful for gesture recognition and motion tracking.
-
-Inspired by: http://stackoverflow.com/a/14756351/1463143
-
-Date: 08 June 2013
-'''
-
 # Required moduls
 import cv2
 import numpy
@@ -55,6 +47,8 @@ w1=0
 h1=0
 
 _, prevHandImage=videoFrame.read()
+prevcnt=numpy.array([], dtype=numpy.int32)
+ab=0
 
 while(keyPressed < 0): # any key pressed has a value >= 0
     min_YCrCb = numpy.array([cv2.getTrackbarPos('min1','Camera Output'),cv2.getTrackbarPos('min2','Camera Output'),cv2.getTrackbarPos('min3','Camera Output')],numpy.uint8)
@@ -74,8 +68,12 @@ while(keyPressed < 0): # any key pressed has a value >= 0
     _,contours, hierarchy = cv2.findContours(skinRegion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
-    # cv2.drawContours(sourceImage, contours, 0, (0, 255, 0), 3)
-    cnt=contours[0]
+    cv2.drawContours(sourceImage, contours, 0, (0, 255, 0), 1)
+    cnt = contours[0]
+    ret = cv2.matchShapes(cnt, prevcnt, 2, 0.0)
+    if(ret>0.72):
+        print (ret)
+    prevcnt=contours[0]
 
     x, y, w, h = cv2.boundingRect(cnt)
 
@@ -86,16 +84,16 @@ while(keyPressed < 0): # any key pressed has a value >= 0
         h1=h
         w1=w
     handImage = sourceImage[max(0,y1-50):y1+h1+50, max(0,x1-50):x1+w1+50]
-    hist1 = cv2.calcHist(handImage, [0, 1, 2], None, [8, 8, 8],
-                        [0, 256, 0, 256, 0, 256])
-    hist1 = cv2.normalize(hist1,hist1).flatten()
-    hist2 = cv2.calcHist(prevHandImage, [0, 1, 2], None, [8, 8, 8],
-                        [0, 256, 0, 256, 0, 256])
-    hist2 = cv2.normalize(hist2,hist2).flatten()
-    d = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CHISQR)
-    # if d<0.9:
-    print(d)
-    prevHandImage = handImage
+    # hist1 = cv2.calcHist(handImage, [0, 1, 2], None, [8, 8, 8],
+    #                     [0, 256, 0, 256, 0, 256])
+    # hist1 = cv2.normalize(hist1,hist1).flatten()
+    # hist2 = cv2.calcHist(prevHandImage, [0, 1, 2], None, [8, 8, 8],
+    #                     [0, 256, 0, 256, 0, 256])
+    # hist2 = cv2.normalize(hist2,hist2).flatten()
+    # d = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CHISQR)
+    # # if d<0.9:
+    # print(d)
+    # prevHandImage = handImage
 
 
     gray = cv2.cvtColor(sourceImage, cv2.COLOR_BGR2HSV)
