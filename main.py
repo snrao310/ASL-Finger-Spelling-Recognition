@@ -20,7 +20,7 @@ nb_classes=36
 img_rows, img_cols = 177,177
 img_channels = 3
 batch_size = 32
-nb_epoch = 200
+nb_epoch = 20
 data_augmentation = True
 
 classes = {
@@ -124,8 +124,8 @@ def trainData():
     Y_train = np_utils.to_categorical(y_train_new, nb_classes)
 
     model = make_network(numpy.asarray(x_train))
-    #train_model(model,X_train,Y_train)
-    #model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    train_model(model,X_train,Y_train)
+    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
     return model
 model = trainData()
 
