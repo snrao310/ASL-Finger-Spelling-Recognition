@@ -124,13 +124,15 @@ def trainData():
     Y_train = np_utils.to_categorical(y_train_new, nb_classes)
 
     model = make_network(numpy.asarray(x_train))
-    train_model(model,X_train,Y_train)
-    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    #train_model(model,X_train,Y_train)
+    #model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
     return model
 model = trainData()
 
 # todo: Ashish fill this
 def identifyGesture(handTrainImage):
+    cv2.imwrite("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a0.jpeg", handTrainImage)
+    handTrainImage = cv2.cvtColor(handTrainImage, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(handTrainImage)
     img_w, img_h = img.size
     M = max(img_w, img_h)
@@ -138,6 +140,7 @@ def identifyGesture(handTrainImage):
     bg_w, bg_h = background.size
     offset = ((bg_w - img_w) / 2, (bg_h - img_h) / 2)
     background.paste(img, offset)
+    background.save("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a1.jpeg")
     size = 177, 177
     background=background.resize(size, Image.ANTIALIAS)
     background.save("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a.jpeg")
@@ -257,17 +260,6 @@ while keyPressed < 0:  # any key pressed has a value >= 0
     else:
         gestureStatic += 1
 
-    # if gesture is static for 10 frames, set gestureDetected to 10 and display "gesture detected"
-    # on screen for 10 frames.
-    if gestureStatic == 10:
-        gestureDetected = 10;
-        print("Gesture Detected")
-        letterDetected = identifyGesture(handTrainImage)  # todo: Ashish fill this function to return actual character
-
-    if gestureDetected > 0:
-        if (letterDetected != None):
-            cv2.putText(sourceImage, letterDetected, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
-        gestureDetected -= 1
 
     # crop coordinates for hand.
     x_crop, y_crop, w_crop, h_crop = cv2.boundingRect(cnt)
@@ -290,6 +282,20 @@ while keyPressed < 0:  # any key pressed has a value >= 0
     # Training image with black background
     handTrainImage = handTrainImage[max(0, y_crop_prev - 15):y_crop_prev + h_crop_prev + 15,
                      max(0, x_crop_prev - 15):x_crop_prev + w_crop_prev + 15]
+
+
+    # if gesture is static for 10 frames, set gestureDetected to 10 and display "gesture detected"
+    # on screen for 10 frames.
+    if gestureStatic == 10:
+        gestureDetected = 10;
+        print("Gesture Detected")
+        letterDetected = identifyGesture(handTrainImage)  # todo: Ashish fill this function to return actual character
+
+    if gestureDetected > 0:
+        if (letterDetected != None):
+            cv2.putText(sourceImage, letterDetected, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
+        gestureDetected -= 1
+
 
     # Comparing histograms of this image and previous image to check if the gesture has changed.
     # Not accurate. So switched to contour comparisons.
