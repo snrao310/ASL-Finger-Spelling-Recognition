@@ -4,67 +4,64 @@ import cv2
 import numpy
 import math
 import os
-import pandas
+from keras.preprocessing.image import img_to_array, load_img
+from keras.optimizers import SGD
 from keras.models import Sequential
-from keras.layers import Dense
-from keras.wrappers.scikit_learn import KerasClassifier
+from keras.layers.core import Dense, Activation, Flatten
+from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
-from sklearn.preprocessing import LabelEncoder
+from PIL import Image
 
-paths = ['/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition']
+paths = ['/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/asl_dataset']
 TOTAL_DATASET = 2515
 x_train = []
 y_train = []
+nb_classes=36
+img_rows, img_cols = 177,177
+img_channels = 3
+batch_size = 32
+nb_epoch = 200
+data_augmentation = True
+
 classes = {
-	'0':0,
-	'1':1,
-	'2':2,
-	'3':3,
-	'4':4,
-	'5':5,
-	'6':6,
-	'7':7,
-	'8':8,
-	'9':9,
-	'a':10,
-	'b':11,
-	'c':12,
-	'd':13,
-	'e':14,
-	'f':15,
-	'g':16,
-	'h':17,
-	'i':18,
-	'j':19,
-	'k':20,
-	'l':21,
-	'm':22,
-    'n':23,
-	'o':24,
-	'p':25,
-	'q':26,
-	'r':27,
-	's':28,
-	't':29,
-	'u':30,
-	'v':31,
-	'w':32,
-	'x':33,
-	'y':34,
-	'z':35,
+    '0': 0,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    'a': 10,
+    'b': 11,
+    'c': 12,
+    'd': 13,
+    'e': 14,
+    'f': 15,
+    'g': 16,
+    'h': 17,
+    'i': 18,
+    'j': 19,
+    'k': 20,
+    'l': 21,
+    'm': 22,
+    'n': 23,
+    'o': 24,
+    'p': 25,
+    'q': 26,
+    'r': 27,
+    's': 28,
+    't': 29,
+    'u': 30,
+    'v': 31,
+    'w': 32,
+    'x': 33,
+    'y': 34,
+    'z': 35,
 }
 
-
-def baseline_model():
-	# create model
-	model = Sequential()
-	model.add(Dense(4, input_dim=4, init='normal', activation='relu'))
-	model.add(Dense(3, init='normal', activation='sigmoid'))
-	# Compile model
-	model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-	return model
-
-estimator = KerasClassifier(build_fn=baseline_model, nb_epoch=200, batch_size=5, verbose=0)
 
 def load_data_set():
     for path in paths:
@@ -72,27 +69,86 @@ def load_data_set():
             for filename in filenames:
                 if filename.endswith(".jpeg"):
                     fullpath = os.path.join(root, filename)
-                    im = cv2.imread(fullpath)
-                    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-                    im = cv2.resize(im, (506,506)).flatten()
-                    x_train.append(im)
+                    img = load_img(fullpath)
+                    img = img_to_array(img)
+                    x_train.append(img)
                     t = fullpath.rindex('/')
                     fullpath = fullpath[0:t]
                     n = fullpath.rindex('/')
                     y_train.append(classes[fullpath[n + 1:t]])
 
 
+def make_network(x_train):
+    model = Sequential()
+
+    model.add(Convolution2D(32, 3, 3, border_mode='same',
+                            input_shape=x_train.shape[1:]))
+    model.add(Activation('relu'))
+    model.add(Convolution2D(32, 3, 3))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Convolution2D(64, 3, 3, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(Convolution2D(64, 3, 3))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Flatten())
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dense(nb_classes))
+    model.add(Activation('softmax'))
+
+    return model
+
+def train_model(model, X_train, Y_train):
+    # let's train the model using SGD + momentum (how original).
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=sgd,
+                  metrics=['accuracy'])
+
+    model.fit(X_train, Y_train,
+              batch_size=batch_size,
+              nb_epoch=nb_epoch)
+
+
 def trainData():
     load_data_set()
-    print numpy.asarray(x_train).shape;
-    print numpy.asarray(y_train).shape;
-    estimator.fit(numpy.asarray(x_train), numpy.asarray(y_train))
+    a = numpy.asarray(y_train)
+    y_train_new = a.reshape(a.shape[0], 1)
+
+    X_train = numpy.asarray(x_train).astype('float32')
+    X_train = X_train/255.0
+    Y_train = np_utils.to_categorical(y_train_new, nb_classes)
+
+    model = make_network(numpy.asarray(x_train))
+    train_model(model,X_train,Y_train)
+    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    return model
+model = trainData()
 
 # todo: Ashish fill this
 def identifyGesture(handTrainImage):
-    handTrainImage=cv2.cvtColor(handTrainImage,cv2.COLOR_BGR2GRAY)
+    img = Image.fromarray(handTrainImage)
+    img_w, img_h = img.size
+    M = max(img_w, img_h)
+    background = Image.new('RGB', (M, M), (0, 0, 0))
+    bg_w, bg_h = background.size
+    offset = ((bg_w - img_w) / 2, (bg_h - img_h) / 2)
+    background.paste(img, offset)
+    size = 177, 177
+    background=background.resize(size, Image.ANTIALIAS)
+    background.save("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a.jpeg")
 
-    predictions = estimator.predict(handTrainImage)
+    open_cv_image = numpy.array(background)
+    # Convert RGB to BGR
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+    background = open_cv_image.astype('float32')
+    background = background/255
+    background = background.reshape((1,) + background.shape)
+    predictions = model.predict_classes(background)
     # currently returns gesture detected string. needs to return the actual letter it detects.
     # Or if it doesn't detect anything, then it should return null string.
     print predictions
@@ -103,7 +159,6 @@ def nothing(x):
     pass
 
 
-trainData()
 
 # Create a window to display the camera feed
 cv2.namedWindow('Camera Output')
