@@ -4,12 +4,67 @@ import cv2
 import numpy
 import math
 import os
+import pandas
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.utils import np_utils
+from sklearn.preprocessing import LabelEncoder
 
 paths = ['/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition']
 TOTAL_DATASET = 2515
-x_train = [TOTAL_DATASET]
-y_train = [TOTAL_DATASET]
+x_train = []
+y_train = []
+classes = {
+	'0':0,
+	'1':1,
+	'2':2,
+	'3':3,
+	'4':4,
+	'5':5,
+	'6':6,
+	'7':7,
+	'8':8,
+	'9':9,
+	'a':10,
+	'b':11,
+	'c':12,
+	'd':13,
+	'e':14,
+	'f':15,
+	'g':16,
+	'h':17,
+	'i':18,
+	'j':19,
+	'k':20,
+	'l':21,
+	'm':22,
+    'n':23,
+	'o':24,
+	'p':25,
+	'q':26,
+	'r':27,
+	's':28,
+	't':29,
+	'u':30,
+	'v':31,
+	'w':32,
+	'x':33,
+	'y':34,
+	'z':35,
+}
 
+
+def baseline_model():
+	# create model
+	model = Sequential()
+	model.add(Dense(4, input_dim=4, init='normal', activation='relu'))
+	model.add(Dense(3, init='normal', activation='sigmoid'))
+	# Compile model
+	model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+	return model
+
+estimator = KerasClassifier(build_fn=baseline_model, nb_epoch=200, batch_size=5, verbose=0)
 
 def load_data_set():
     for path in paths:
@@ -19,19 +74,28 @@ def load_data_set():
                     fullpath = os.path.join(root, filename)
                     im = cv2.imread(fullpath)
                     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+                    im = cv2.resize(im, (506,506)).flatten()
                     x_train.append(im)
                     t = fullpath.rindex('/')
                     fullpath = fullpath[0:t]
                     n = fullpath.rindex('/')
-                    print(fullpath[n + 1:t])
-                    y_train.append(fullpath[n + 1:t])
+                    y_train.append(classes[fullpath[n + 1:t]])
 
+
+def trainData():
+    load_data_set()
+    print numpy.asarray(x_train).shape;
+    print numpy.asarray(y_train).shape;
+    estimator.fit(numpy.asarray(x_train), numpy.asarray(y_train))
 
 # todo: Ashish fill this
 def identifyGesture(handTrainImage):
     handTrainImage=cv2.cvtColor(handTrainImage,cv2.COLOR_BGR2GRAY)
+
+    predictions = estimator.predict(handTrainImage)
     # currently returns gesture detected string. needs to return the actual letter it detects.
     # Or if it doesn't detect anything, then it should return null string.
+    print predictions
     return "Gesture Detected"
 
 
@@ -39,7 +103,7 @@ def nothing(x):
     pass
 
 
-load_data_set()
+trainData()
 
 # Create a window to display the camera feed
 cv2.namedWindow('Camera Output')
