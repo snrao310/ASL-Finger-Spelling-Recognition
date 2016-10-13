@@ -11,6 +11,7 @@ from keras.layers.core import Dense, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from PIL import Image
+import keras
 
 paths = ['/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/asl_dataset']
 TOTAL_DATASET = 2515
@@ -123,9 +124,11 @@ def trainData():
     X_train = X_train/255.0
     Y_train = np_utils.to_categorical(y_train_new, nb_classes)
 
-    model = make_network(numpy.asarray(x_train))
-    train_model(model,X_train,Y_train)
-    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    # model = make_network(numpy.asarray(x_train))
+    # train_model(model,X_train,Y_train)
+    # model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+
+    model= keras.models.load_model('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
     return model
 model = trainData()
 
@@ -155,7 +158,8 @@ def identifyGesture(handTrainImage):
     # currently returns gesture detected string. needs to return the actual letter it detects.
     # Or if it doesn't detect anything, then it should return null string.
     print predictions
-    return "Gesture Detected"
+    key= (key for key,value in classes.items() if value==predictions[0]).next()
+    return key
 
 
 def nothing(x):
@@ -232,6 +236,7 @@ while keyPressed < 0:  # any key pressed has a value >= 0
 
     # Convert image to YCrCb
     imageYCrCb = cv2.cvtColor(sourceImage, cv2.COLOR_BGR2YCR_CB)
+    imageYCrCb = cv2.GaussianBlur(imageYCrCb, (5, 5), 0)
 
     # Find region with skin tone in YCrCb image
     skinRegion = cv2.inRange(imageYCrCb, min_YCrCb, max_YCrCb)
