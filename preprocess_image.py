@@ -33,7 +33,7 @@ def padImage(F, M, L, W):
     offset = ((bg_w - img_w) / 2, (bg_h - img_h) / 2)
     background.paste(img, offset)
     size = L, W
-    background.thumbnail(size, Image.ANTIALIAS)
+    background = background.resize(size, Image.ANTIALIAS)
     outputFile = F.replace("png", "jpeg")
     background.save(outputFile)
 
@@ -44,4 +44,4 @@ for path in paths:
             if filename.endswith(".png"):
                 l, w = getDimensions(os.path.join(root, filename))
                 m = max(l, w)
-                padImage(os.path.join(root, filename), m, L, W)
+                padImage(os.path.join(root, filename), m, 400, 400)
