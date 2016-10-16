@@ -13,17 +13,19 @@ from keras.utils import np_utils
 from PIL import Image
 import keras
 
+# path to the dataset
 paths = ['/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/asl_dataset']
 TOTAL_DATASET = 2515
-x_train = []
+x_train = []  # training lists
 y_train = []
-nb_classes=36
-img_rows, img_cols = 177,177
-img_channels = 3
+nb_classes = 36  # number of classes
+img_rows, img_cols = 400, 400  # size of training images
+img_channels = 3  # BGR channels
 batch_size = 32
-nb_epoch = 20
+nb_epoch = 100  # iterations for training
 data_augmentation = True
 
+# dictionary for classes from char to numbers
 classes = {
     '0': 0,
     '1': 1,
@@ -64,6 +66,7 @@ classes = {
 }
 
 
+# load the dataset and populate xtrain and ytrain
 def load_data_set():
     for path in paths:
         for root, directories, filenames in os.walk(path):
@@ -79,6 +82,7 @@ def load_data_set():
                     y_train.append(classes[fullpath[n + 1:t]])
 
 
+# create a model for training and return the model
 def make_network(x_train):
     model = Sequential()
 
@@ -103,6 +107,8 @@ def make_network(x_train):
 
     return model
 
+
+# traiing model which was created
 def train_model(model, X_train, Y_train):
     # let's train the model using SGD + momentum (how original).
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
@@ -115,26 +121,40 @@ def train_model(model, X_train, Y_train):
               nb_epoch=nb_epoch)
 
 
+# loads data set, converts the triaining arrays into required formats of numpy arrays and calls make_network to
+# create a model and then calls train_model to train it and then saves the model in disk. OR just loads the model
+# from disk.
 def trainData():
     load_data_set()
     a = numpy.asarray(y_train)
     y_train_new = a.reshape(a.shape[0], 1)
 
     X_train = numpy.asarray(x_train).astype('float32')
-    X_train = X_train/255.0
+    X_train = X_train / 255.0
     Y_train = np_utils.to_categorical(y_train_new, nb_classes)
 
-    # model = make_network(numpy.asarray(x_train))
-    # train_model(model,X_train,Y_train)
-    # model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    # run this if model is not saved.
+    model = make_network(numpy.asarray(x_train))
+    train_model(model,X_train,Y_train)
+    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
 
-    model= keras.models.load_model('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    # run this if model is already saved on disk.
+    # model = keras.models.load_model('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+
     return model
+
+
 model = trainData()
 
-# todo: Ashish fill this
+
+# called from main, when gesture is recognized. The gesture image is cropped and sent to this function.
 def identifyGesture(handTrainImage):
-    cv2.imwrite("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a0.jpeg", handTrainImage)
+    # saving the sent image for checking
+    # cv2.imwrite("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a0.jpeg", handTrainImage)
+
+    # converting the image to same resolution as training data by padding to reach 1:1 aspect ration and then
+    # resizing to 400 x 400. Same is done with training data in preprocess_image.py. Opencv image is first
+    # converted to Pillow image to do this.
     handTrainImage = cv2.cvtColor(handTrainImage, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(handTrainImage)
     img_w, img_h = img.size
@@ -143,28 +163,27 @@ def identifyGesture(handTrainImage):
     bg_w, bg_h = background.size
     offset = ((bg_w - img_w) / 2, (bg_h - img_h) / 2)
     background.paste(img, offset)
-    background.save("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a1.jpeg")
-    size = 177, 177
-    background=background.resize(size, Image.ANTIALIAS)
-    background.save("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a.jpeg")
+    size = 400,400
+    background = background.resize(size, Image.ANTIALIAS)
 
+    # saving the processed image for checking.
+    # background.save("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a.jpeg")
+
+    # get image as numpy array and predict using model
     open_cv_image = numpy.array(background)
-    # Convert RGB to BGR
-    open_cv_image = open_cv_image[:, :, ::-1].copy()
     background = open_cv_image.astype('float32')
-    background = background/255
+    background = background / 255
     background = background.reshape((1,) + background.shape)
     predictions = model.predict_classes(background)
-    # currently returns gesture detected string. needs to return the actual letter it detects.
-    # Or if it doesn't detect anything, then it should return null string.
+
+    # print predicted class and get the class name (character name) for the given class number and return it
     print predictions
-    key= (key for key,value in classes.items() if value==predictions[0]).next()
+    key = (key for key, value in classes.items() if value == predictions[0]).next()
     return key
 
 
 def nothing(x):
     pass
-
 
 
 # Create a window to display the camera feed
@@ -265,7 +284,6 @@ while keyPressed < 0:  # any key pressed has a value >= 0
     else:
         gestureStatic += 1
 
-
     # crop coordinates for hand.
     x_crop, y_crop, w_crop, h_crop = cv2.boundingRect(cnt)
 
@@ -288,7 +306,6 @@ while keyPressed < 0:  # any key pressed has a value >= 0
     handTrainImage = handTrainImage[max(0, y_crop_prev - 15):y_crop_prev + h_crop_prev + 15,
                      max(0, x_crop_prev - 15):x_crop_prev + w_crop_prev + 15]
 
-
     # if gesture is static for 10 frames, set gestureDetected to 10 and display "gesture detected"
     # on screen for 10 frames.
     if gestureStatic == 10:
@@ -300,7 +317,6 @@ while keyPressed < 0:  # any key pressed has a value >= 0
         if (letterDetected != None):
             cv2.putText(sourceImage, letterDetected, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 2)
         gestureDetected -= 1
-
 
     # Comparing histograms of this image and previous image to check if the gesture has changed.
     # Not accurate. So switched to contour comparisons.
