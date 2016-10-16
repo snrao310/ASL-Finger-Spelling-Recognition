@@ -82,6 +82,7 @@ def load_data_set():
                     y_train.append(classes[fullpath[n + 1:t]])
 
 
+
 # create a model for training and return the model
 def make_network(x_train):
     model = Sequential()
