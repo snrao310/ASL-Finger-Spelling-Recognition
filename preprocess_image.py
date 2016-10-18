@@ -44,4 +44,4 @@ for path in paths:
             if filename.endswith(".png"):
                 l, w = getDimensions(os.path.join(root, filename))
                 m = max(l, w)
-                padImage(os.path.join(root, filename), m, 400, 400)
+                padImage(os.path.join(root, filename), m, 256, 256)
