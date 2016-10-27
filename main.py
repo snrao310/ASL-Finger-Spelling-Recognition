@@ -18,15 +18,15 @@ paths = ['/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/asl_da
 TOTAL_DATASET = 2515
 x_train = []  # training lists
 y_train = []
-nb_classes = 36  # number of classes
-img_rows, img_cols = 400, 400  # size of training images
+nb_classes = 10  # number of classes
+img_rows, img_cols = 256, 256  # size of training images
 img_channels = 3  # BGR channels
 batch_size = 32
-nb_epoch = 100  # iterations for training
+nb_epoch = 25  # iterations for training
 data_augmentation = True
 
 # dictionary for classes from char to numbers
-classes = {
+classes1 = {
     '0': 0,
     '1': 1,
     '2': 2,
@@ -63,6 +63,18 @@ classes = {
     'x': 33,
     'y': 34,
     'z': 35,
+}
+classes = {
+    'a': 0,
+    'b': 1,
+    'c': 2,
+    'e': 3,
+    'h': 4,
+    'o': 5,
+    'r': 6,
+    'u': 7,
+    'w': 8,
+    'y': 9,
 }
 
 
@@ -137,7 +149,7 @@ def trainData():
     # run this if model is not saved.
     model = make_network(numpy.asarray(x_train))
     train_model(model,X_train,Y_train)
-    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
+    model.save('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras1.model')
 
     # run this if model is already saved on disk.
     # model = keras.models.load_model('/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/keras.model')
@@ -154,7 +166,7 @@ def identifyGesture(handTrainImage):
     # cv2.imwrite("/home/snrao/IDE/PycharmProjects/ASL Finger Spelling Recognition/a0.jpeg", handTrainImage)
 
     # converting the image to same resolution as training data by padding to reach 1:1 aspect ration and then
-    # resizing to 400 x 400. Same is done with training data in preprocess_image.py. Opencv image is first
+    # resizing to 256x256. Same is done with training data in preprocess_image.py. Opencv image is first
     # converted to Pillow image to do this.
     handTrainImage = cv2.cvtColor(handTrainImage, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(handTrainImage)
@@ -164,7 +176,7 @@ def identifyGesture(handTrainImage):
     bg_w, bg_h = background.size
     offset = ((bg_w - img_w) / 2, (bg_h - img_h) / 2)
     background.paste(img, offset)
-    size = 400,400
+    size =256,256
     background = background.resize(size, Image.ANTIALIAS)
 
     # saving the processed image for checking.
